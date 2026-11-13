@@ -1,0 +1,39 @@
+-- Incremental calibration feature (2026-11).
+-- Fresh databases create these tables from SQLAlchemy metadata at startup
+-- (Base.metadata.create_all). Existing production databases should apply the
+-- equivalent DDL below after review; the six original aggregates are untouched.
+--
+-- CREATE TABLE calibrations (
+--   id VARCHAR(36) PRIMARY KEY,
+--   created_at DATETIME NOT NULL,
+--   name VARCHAR(180) NOT NULL UNIQUE,
+--   description TEXT NOT NULL,
+--   model_id VARCHAR(36) NOT NULL,
+--   calibrated_model_id VARCHAR(36) NULL,
+--   status VARCHAR(20) NOT NULL,
+--   reject_reason VARCHAR(40) NOT NULL,
+--   reject_detail TEXT NOT NULL,
+--   diagnostics JSON NOT NULL,
+--   input_sha256 VARCHAR(64) NOT NULL,
+--   CONSTRAINT fk_calibrations_model FOREIGN KEY (model_id) REFERENCES response_models (id),
+--   CONSTRAINT fk_calibrations_calibrated_model FOREIGN KEY (calibrated_model_id) REFERENCES response_models (id)
+-- );
+-- CREATE TABLE calibration_observations (
+--   id VARCHAR(36) PRIMARY KEY,
+--   created_at DATETIME NOT NULL,
+--   calibration_id VARCHAR(36) NOT NULL,
+--   condition_id VARCHAR(64) NOT NULL,
+--   point JSON NOT NULL,
+--   response DOUBLE NOT NULL,
+--   weight DOUBLE NOT NULL,
+--   fitted_value DOUBLE NULL,
+--   residual DOUBLE NULL,
+--   weighted_squared_residual DOUBLE NULL,
+--   INDEX ix_calibration_observations_calibration_id (calibration_id),
+--   CONSTRAINT fk_calobs_calibration FOREIGN KEY (calibration_id) REFERENCES calibrations (id)
+-- );
+--
+-- Successful calibration inserts a NEW response_models row (plus its
+-- model_factors / model_interactions); the source model rows are never
+-- updated or deleted. Rejected batches persist with status='rejected' and
+-- create no model.
